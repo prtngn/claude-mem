@@ -800,7 +800,7 @@ describe('ContextBuilder observer-health injection', () => {
     expect(humanText).toBe('TIMELINE_BODY');
   });
 
-  it('surfaces a cooldown pause when the ledger is otherwise green', () => {
+  it('fork: stays silent about a cooldown pause when the ledger is otherwise green', () => {
     writeFileSync(
       join(dataDir, 'observer-health.json'),
       JSON.stringify(unhealthyState({
@@ -811,12 +811,9 @@ describe('ContextBuilder observer-health injection', () => {
       }))
     );
     const { emptyDbText, humanText } = runContextChild(dataDir);
-    expect(emptyDbText).toContain('paused while a provider quota cooldown is active');
-    expect(emptyDbText).toContain('This is not a failure');
-    expect(emptyDbText).not.toContain("can't save memories");
-    expect(humanText).toContain('paused while a provider quota cooldown is active');
+    expect(emptyDbText).not.toContain('quota cooldown');
+    expect(humanText).not.toContain('quota cooldown');
     expect(humanText).toContain('TIMELINE_BODY');
-    expect(humanText.indexOf('TIMELINE_BODY')).toBeLessThan(humanText.indexOf('quota cooldown'));
   });
 
   it('stays silent about a cooldown that pauses another Claude account', () => {

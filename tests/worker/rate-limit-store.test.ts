@@ -18,6 +18,25 @@ import {
 
 const FIXED_NOW = 1_700_000_000_000; // arbitrary epoch ms anchor
 
+describe('shouldAbortForQuota — fork utilizationGuard toggle', () => {
+  const cliAuth = 'Claude Code OAuth token (read from system keychain at spawn)';
+
+  it('ignores utilization thresholds when the guard is off', () => {
+    const store = new RateLimitStore();
+    store.set({ rateLimitType: 'seven_day', status: 'allowed', utilization: 0.99, resetsAt: FIXED_NOW + 3_600_000 });
+    expect(shouldAbortForQuota(cliAuth, store, FIXED_NOW, undefined, { utilizationGuard: false }).abort).toBe(false);
+    expect(shouldAbortForQuota(cliAuth, store, FIXED_NOW).abort).toBe(true);
+  });
+
+  it('still aborts on a provider rejection when the guard is off', () => {
+    const store = new RateLimitStore();
+    store.set({ rateLimitType: 'seven_day', status: 'rejected', utilization: 1, resetsAt: FIXED_NOW + 3_600_000 });
+    const decision = shouldAbortForQuota(cliAuth, store, FIXED_NOW, undefined, { utilizationGuard: false });
+    expect(decision.abort).toBe(true);
+    expect(decision.reason).toContain('rejected');
+  });
+});
+
 function freshStore(): RateLimitStore {
   return new RateLimitStore();
 }

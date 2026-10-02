@@ -59,6 +59,7 @@ export const PRO_TRIAL_PITCH = `Get up to ${PLAN_USAGE_GAIN_PERCENT}% more usage
  * Callers that want ANSI styling should compose from PRO_TRIAL_PITCH and
  * proTrialUrl() instead so the escape codes stay at the presentation layer.
  */
-export function proTrialLine(source: ProPromoSource): string {
-  return `${String.fromCodePoint(0x2728)} ${PRO_TRIAL_PITCH} ${proTrialUrl(source)}`;
+export function proTrialLine(_source: ProPromoSource): string {
+  // Fork: no Pro upsell on any surface.
+  return '';
 }

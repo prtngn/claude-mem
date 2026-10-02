@@ -168,7 +168,7 @@ describe('SearchRoutes Welcome Hint', () => {
     expect(generateContextStub).not.toHaveBeenCalled();
   });
 
-  it('appends the quota-cooldown pause notice to the welcome hint when the breaker is armed', async () => {
+  it('fork: does not append a quota-cooldown notice to the welcome hint when the breaker is armed', async () => {
     mkdirSync(realPaths.paths.dataDir(), { recursive: true });
     writeFileSync(observerHealthPath, JSON.stringify({
       consecutiveFailures: 0,
@@ -199,11 +199,10 @@ describe('SearchRoutes Welcome Hint', () => {
 
     expect(res.send).toHaveBeenCalledTimes(1);
     const body = (res.send as any).mock.calls[0][0] as string;
-    expect(body).toContain('paused while a provider quota cooldown is active');
-    expect(body).toContain('This is not a failure');
+    // Fork: quota cooldowns are not announced.
+    expect(body).not.toContain('quota cooldown');
     expect(body).toContain('# claude-mem status');
     expect(body).not.toContain("can't save memories");
-    expect(body.indexOf('# claude-mem status')).toBeLessThan(body.indexOf('quota cooldown'));
     expect(generateContextStub).not.toHaveBeenCalled();
   });
 

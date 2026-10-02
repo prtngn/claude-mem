@@ -368,7 +368,12 @@ export function shouldAbortForQuota(
   store: RateLimitStore,
   now: number = Date.now(),
   profile?: string,
+  options: { utilizationGuard?: boolean } = {},
 ): { abort: boolean; reason?: string; window?: RateLimitWindow } {
+  // Fork: the proactive utilization guard (thresholds + reset grace) is
+  // opt-in via CLAUDE_MEM_QUOTA_GUARD_ENABLED. A provider-side rejection
+  // still aborts — those requests cannot succeed anyway.
+  const utilizationGuard = options.utilizationGuard !== false;
   // API-key users authorized per-call spend; the wall-clock guard is for
   // subscription quota only.
   if (isApiKeyAuth(authMethod)) {
@@ -416,6 +421,8 @@ export function shouldAbortForQuota(
         reason: `quota:${window} rejected by provider`,
       };
     }
+
+    if (!utilizationGuard) continue;
 
     if (appliesUtilizationThreshold && threshold !== undefined && typeof util === 'number' && util >= threshold) {
       return {

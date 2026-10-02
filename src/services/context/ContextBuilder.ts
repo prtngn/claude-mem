@@ -37,11 +37,9 @@ import { renderHumanEmptyState } from './formatters/HumanFormatter.js';
 import {
   readObserverHealth,
   isObserverUnhealthy,
-  isObserverQuotaCooldownActive,
+  isQuotaFailure,
   renderObserverHealthWarning,
-  renderObserverQuotaCooldownNotice,
 } from '../../shared/observer-health.js';
-import { cooldownAppliesToCurrentAccount } from '../../shared/quota-cooldown.js';
 import { readSyncHealth, renderSyncHealthWarning } from '../../shared/sync-health.js';
 import { resolveRuntimeContext, type ServerRuntimeContext } from '../hooks/runtime-selector.js';
 import { fetchServerContextRows, type ServerContextRows } from './ServerContextRows.js';
@@ -239,19 +237,11 @@ export function withObserverHealthWarning(text: string, forHuman: boolean = fals
  */
 export function observerHealthWarning(forHuman: boolean = false): string {
   const health = readObserverHealth();
-  // Failure banner wins when both are set: the quota-exhausted copy already
-  // says capture is paused, and a cooldown is not a second outage. Cooldown
-  // alone (consecutiveFailures still below the unhealthy threshold) is the
-  // gap this notice exists to close — the breaker withholds the generator
-  // without ever incrementing the failure streak. A Claude breaker pauses only
-  // the account it was armed under; after a switch to another account it
-  // withholds nothing, so announcing it would be false.
-  const cooldown = health?.quotaCooldown;
   let notice: string | null = null;
-  if (isObserverUnhealthy(health)) {
+  // Fork: quota outages and cooldowns are not announced in session context —
+  // the queued work drains on its own once the provider accepts requests again.
+  if (isObserverUnhealthy(health) && !isQuotaFailure(health)) {
     notice = renderObserverHealthWarning(health);
-  } else if (isObserverQuotaCooldownActive(health) && cooldown && cooldownAppliesToCurrentAccount(cooldown)) {
-    notice = renderObserverQuotaCooldownNotice(health);
   }
   // Cloud sync health rides the same slot: a paused (401/403) or long-failing
   // sync is the other outage users otherwise discover only by missing memories.

@@ -103,14 +103,11 @@ describe('cooldown reads after a Claude account switch', () => {
     expect(agent.startSession).not.toHaveBeenCalled();
   });
 
-  it('tells only the paused account at SessionStart that capture is paused', () => {
+  it('fork: never announces the pause at SessionStart, for any account', () => {
     recordQuotaExhausted('claude', 'Weekly limit reached', 'seven_day'); // armed under A
-    expect(observerHealthWarning()).toContain(PAUSE_NOTICE);
+    expect(observerHealthWarning()).not.toContain(PAUSE_NOTICE);
 
     profile = 'B';
     expect(observerHealthWarning()).not.toContain(PAUSE_NOTICE);
-
-    profile = 'A';
-    expect(observerHealthWarning()).toContain(PAUSE_NOTICE);
   });
 });

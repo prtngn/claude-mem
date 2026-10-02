@@ -375,6 +375,8 @@ export class ClaudeProvider {
       // it, and a refusal it hits arms the breaker under it.
       const observerProfile = resolveConfigDirProfileKey();
       session.observerProfile = observerProfile;
+      const quotaGuardEnabled =
+        SettingsDefaultsManager.loadFromFile(USER_SETTINGS_PATH).CLAUDE_MEM_QUOTA_GUARD_ENABLED === 'true';
 
       logger.info('SDK', 'Starting SDK query', {
         sessionDbId: session.sessionDbId,
@@ -496,7 +498,9 @@ export class ClaudeProvider {
               observed_billing: session.observedBilling,
             });
           }
-          const decision = shouldAbortForQuota(authMethod, globalRateLimitStore, Date.now(), observerProfile);
+          const decision = shouldAbortForQuota(authMethod, globalRateLimitStore, Date.now(), observerProfile, {
+            utilizationGuard: quotaGuardEnabled,
+          });
           if (decision.abort) {
             logger.warn('SDK', `Aborting session for quota guard: ${decision.reason}`, {
               sessionDbId: session.sessionDbId,
